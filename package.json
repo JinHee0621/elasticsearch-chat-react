@@ -1,0 +1,19 @@
+{
+  "name": "eschat-react",
+  "version": "1.0.0",
+  "description": "ElasticChat - React",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "app-root-path": "^3.0.0",
+    "elasticsearch": "^16.7.3",
+    "express": "^4.17.3",
+    "fs": "0.0.1-security",
+    "http": "0.0.1-security",
+    "socket.io": "^4.4.1"
+  }
+}

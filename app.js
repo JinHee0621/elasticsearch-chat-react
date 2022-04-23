@@ -1,28 +1,28 @@
 const express = require('express');
 const http = require('http');
 const fs = require('fs');
+const cors = require('cors');
 const approot = require('app-root-path');
 const socket = require('socket.io');
 const app = express();
-
 const server = http.createServer(app);
-const io = socket(server);
 const esService = require(`${approot}/elasticsearch.service.js`);
+
+app.use(cors());
+const io = socket(server, {
+    cors: {
+        origin : "*",
+        credentials : true
+    }
+});
+
 
 app.use('/css', express.static('./css'))
 app.use('/image', express.static('./image'))
 
-app.get('/', (req, res) => {
-    fs.readFile('./index.html', function(err,data){
-        if(err){
-            res.send('Error')
-        }else{
-            res.writeHead(200, {'Content-Type' : 'text/html'})
-            res.write(data)
-            res.end()
-        }
-    })
-});
+/*app.get('/', (req, res) => {
+    res.send({message:'hello'})
+});*/
 
 io.on('connection', (socket) => {
     socket.on('check', () => {
@@ -42,7 +42,7 @@ io.on('connection', (socket) => {
     })
 });
 
-server.listen(3000, () => {
-    console.log('Connected at 3000');
+server.listen(3001, () => {
+    console.log('Connected at 3001');
 });
 

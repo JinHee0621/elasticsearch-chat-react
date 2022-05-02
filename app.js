@@ -11,7 +11,7 @@ const esService = require(`${approot}/elasticsearch.service.js`);
 app.use(cors());
 const io = socket(server, {
     cors: {
-        origin : "*",
+        origin : "http://localhost:3000",
         credentials : true
     }
 });
@@ -27,6 +27,12 @@ app.use('/image', express.static('./image'))
 io.on('connection', (socket) => {
     socket.on('check', () => {
         console.log('connected Page');
+    });
+
+    socket.on('login', (user) => {
+        console.log('do Login');
+        console.log(user)
+        socket.emit('checkLogin', user);
     });
 
     socket.on('checkEsConn', () => {

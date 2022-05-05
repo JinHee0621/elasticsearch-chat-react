@@ -11,8 +11,8 @@ const esService = require(`${approot}/elasticsearch.service.js`);
 app.use(cors());
 const io = socket(server, {
     cors: {
-        origin : "http://localhost:3000",
-        credentials : true
+        origin: "http://localhost:3000",
+        credentials: true
     }
 });
 
@@ -29,20 +29,45 @@ io.on('connection', (socket) => {
         console.log('connected Page');
     });
 
-    socket.on('login', (user) => {
-        console.log('do Login');
-        console.log(user)
-        socket.emit('checkLogin', user);
+    socket.on('login', (user, password) => {
+
+        console.log(user + " : " + password)
+        let dologin = esService.search("chat_user", {
+            "query": {
+                "query_string": {
+                    "query": "user_id : " + user + " AND user_pass : " + password
+                }
+            }
+        });
+
+        dologin.then(function (result) {
+            console.log(result);
+            let userData = result.hits;
+            if (userData.total.value >= 1) {
+                socket.emit('checkLogin', user);
+            } else {
+                console.log("로그인 실패")
+            }
+        })
+        //
+    });
+
+    socket.on('join', (user, password) => {
+        esService.addDocument("chat_user", password + Math.floor(Math.random() * (10000000)), {
+            "user_id": user,
+            "user_pass": password,
+            "profile": null
+        });
     });
 
     socket.on('checkEsConn', () => {
         let checkIndex = esService.search("testindex", {
             "query": {
-                    "match_all" : {}
-                }
+                "match_all": {}
+            }
         });
         //Promise 형태로 나타난 roomData 값을 출력
-        checkIndex.then(function(result){
+        checkIndex.then(function (result) {
             console.log(result.hits.hits[0]);
         })
     })

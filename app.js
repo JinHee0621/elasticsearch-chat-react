@@ -30,7 +30,6 @@ io.on('connection', (socket) => {
     });
 
     socket.on('login', (user, password) => {
-
         console.log(user + " : " + password)
         let dologin = esService.search("chat_user", {
             "query": {
@@ -48,6 +47,22 @@ io.on('connection', (socket) => {
             } else {
                 console.log("로그인 실패")
             }
+        })
+        //
+    });
+
+    socket.on('loadRoom',(user) => {
+        console.log("Call Room Lists");
+        let callList = esService.search("chat_room", {
+            "query": {
+                "query_string": {
+                    "query": "room_users : *"+user+"*"
+                }
+            }
+        });
+
+        callList.then(function (result) {
+            socket.emit('renderlist', result.hits.hits);            
         })
         //
     });

@@ -20,10 +20,6 @@ const io = socket(server, {
 app.use('/css', express.static('./css'))
 app.use('/image', express.static('./image'))
 
-/*app.get('/', (req, res) => {
-    res.send({message:'hello'})
-});*/
-
 io.on('connection', (socket) => {
     socket.on('check', () => {
         console.log('connected Page');
@@ -41,7 +37,10 @@ io.on('connection', (socket) => {
 
         dologin.then(function (result) {
             console.log(result);
+
             let userData = result.hits;
+            socket.user = user;
+            
             if (userData.total.value >= 1) {
                 socket.emit('checkLogin', user);
             } else {
@@ -75,6 +74,16 @@ io.on('connection', (socket) => {
         });
     });
 
+    socket.on('enterRoom', (roomid) => {
+        socket.join(roomid);
+        console.log("방 들어감")
+    })
+
+    socket.on('reaveRoom', (roomid) => {
+        socket.leave(roomid);
+    })
+  
+
     socket.on('checkEsConn', () => {
         let checkIndex = esService.search("testindex", {
             "query": {
@@ -86,6 +95,13 @@ io.on('connection', (socket) => {
             console.log(result.hits.hits[0]);
         })
     })
+
+    socket.on('send', (message, room_id) => {
+        console.log('메시지전송');
+        socket.broadcast.to(room_id).emit('recept_message', message);       
+    });
+ 
+
 });
 
 server.listen(3001, () => {

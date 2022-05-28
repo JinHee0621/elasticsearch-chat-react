@@ -37,7 +37,6 @@ io.on('connection', (socket) => {
 
         dologin.then(function (result) {
             console.log(result);
-
             let userData = result.hits;
             socket.user = user;
             
@@ -96,15 +95,64 @@ io.on('connection', (socket) => {
         })
     })
 
-    socket.on('send', (message, room_id) => {
-        console.log('메시지전송');
-        socket.broadcast.to(room_id).emit('recept_message', message);       
+    socket.on('send', (user, message, room_id) => {
+        console.log('메시지전송: ' + user);
+        const chatTime = new Date();
+        let setMonth = "";
+        let setDay = "";
+        let setHour = "";
+        let setMinutes = "";
+        let setSeconds = "";
+
+        if(chatTime.getMonth()+1 < 10){
+            setMonth = "0" + (chatTime.getMonth()+1);
+        }else{
+            setMonth = (chatTime.getMonth()+1);
+        }
+
+        if(chatTime.getDate() < 10){
+            setDay = "0" + (chatTime.getDate()+1);
+        }else{
+            setDay = (chatTime.getDate()+1);
+        }
+
+        if(chatTime.getHours() < 10){
+            setHour = "0" + (chatTime.getHours());
+        }else{
+            setHour = (chatTime.getHours());
+        }
+
+        if(chatTime.getMinutes() < 10){
+            setMinutes = "0" + (chatTime.getMinutes());
+        }else{
+            setMinutes = (chatTime.getMinutes());
+        }
+
+        if(chatTime.getSeconds() < 10){
+            setSeconds = "0" + (chatTime.getSeconds());
+        }else{
+            setSeconds = (chatTime.getSeconds());
+        }
+
+        const timeData = chatTime.getFullYear() + "-" + setMonth + "-" + setDay + " " + 
+        setHour + ":" + setMinutes + ":" + setSeconds;
+
+        let chat_id =  room_id + Math.floor(Math.random() * (10000000))
+
+        esService.addDocument("chat_content", chat_id, {
+            "room_id": room_id,
+            "chat_detail": message,
+            "chat_user": user,
+            "chat_no" : chat_id,
+            "chat_time" : timeData
+        });
+
+        socket.broadcast.to(room_id).emit('recept_message', message, user);       
     });
- 
+
 
 });
 
 server.listen(3001, () => {
     console.log('Connected at 3001');
 });
-

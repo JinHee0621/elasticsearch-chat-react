@@ -43,7 +43,7 @@ io.on('connection', (socket) => {
             if (userData.total.value >= 1) {
                 socket.emit('checkLogin', user);
             } else {
-                console.log("로그인 실패")
+                socket.emit('failLogin');
             }
         })
         //
@@ -75,7 +75,30 @@ io.on('connection', (socket) => {
 
     socket.on('enterRoom', (roomid) => {
         socket.join(roomid);
-        console.log("방 들어감")
+        let load_roomid = roomid;
+        let loaded_massage_list = esService.search("chat_content", {
+            "query": {
+                "query_string": {
+                    "query": `room_id : ${load_roomid}`
+                }
+            },
+            "sort" : [
+                {
+                    "@timestamp": {
+                      "order": "asc"
+                    }
+                }
+            ],
+            "size" : 100                
+        });
+
+        loaded_massage_list.then(function (result) {
+            result.hits.hits.map((message) => {
+                let message_content = message?._source;
+                console.log(message_content)
+                socket.emit('load_message', message_content.chat_detail, message_content.chat_user);   
+            })
+        })
     })
 
     socket.on('reaveRoom', (roomid) => {
@@ -96,57 +119,16 @@ io.on('connection', (socket) => {
     })
 
     socket.on('send', (user, message, room_id) => {
-        console.log('메시지전송: ' + user);
-        const chatTime = new Date();
-        let setMonth = "";
-        let setDay = "";
-        let setHour = "";
-        let setMinutes = "";
-        let setSeconds = "";
-
-        if(chatTime.getMonth()+1 < 10){
-            setMonth = "0" + (chatTime.getMonth()+1);
-        }else{
-            setMonth = (chatTime.getMonth()+1);
-        }
-
-        if(chatTime.getDate() < 10){
-            setDay = "0" + (chatTime.getDate()+1);
-        }else{
-            setDay = (chatTime.getDate()+1);
-        }
-
-        if(chatTime.getHours() < 10){
-            setHour = "0" + (chatTime.getHours());
-        }else{
-            setHour = (chatTime.getHours());
-        }
-
-        if(chatTime.getMinutes() < 10){
-            setMinutes = "0" + (chatTime.getMinutes());
-        }else{
-            setMinutes = (chatTime.getMinutes());
-        }
-
-        if(chatTime.getSeconds() < 10){
-            setSeconds = "0" + (chatTime.getSeconds());
-        }else{
-            setSeconds = (chatTime.getSeconds());
-        }
-
-        const timeData = chatTime.getFullYear() + "-" + setMonth + "-" + setDay + " " + 
-        setHour + ":" + setMinutes + ":" + setSeconds;
-
+        const timeData = calculateTime();
         let chat_id =  room_id + Math.floor(Math.random() * (10000000))
-
         esService.addDocument("chat_content", chat_id, {
             "room_id": room_id,
             "chat_detail": message,
             "chat_user": user,
             "chat_no" : chat_id,
-            "chat_time" : timeData
+            "chat_time" : timeData,
+            "@timestamp" : new Date().toISOString()
         });
-
         socket.broadcast.to(room_id).emit('recept_message', message, user);       
     });
 
@@ -156,3 +138,47 @@ io.on('connection', (socket) => {
 server.listen(3001, () => {
     console.log('Connected at 3001');
 });
+
+function calculateTime() {
+    const chatTime = new Date();
+    let setMonth = "";
+    let setDay = "";
+    let setHour = "";
+    let setMinutes = "";
+    let setSeconds = "";
+
+    if(chatTime.getMonth()+1 < 10){
+        setMonth = "0" + (chatTime.getMonth()+1);
+    }else{
+        setMonth = (chatTime.getMonth()+1);
+    }
+
+    if(chatTime.getDate() < 10){
+        setDay = "0" + (chatTime.getDate()+1);
+    }else{
+        setDay = (chatTime.getDate()+1);
+    }
+
+    if(chatTime.getHours() < 10){
+        setHour = "0" + (chatTime.getHours());
+    }else{
+        setHour = (chatTime.getHours());
+    }
+
+    if(chatTime.getMinutes() < 10){
+        setMinutes = "0" + (chatTime.getMinutes());
+    }else{
+        setMinutes = (chatTime.getMinutes());
+    }
+
+    if(chatTime.getSeconds() < 10){
+        setSeconds = "0" + (chatTime.getSeconds());
+    }else{
+        setSeconds = (chatTime.getSeconds());
+    }
+
+    const timeData = chatTime.getFullYear() + "-" + setMonth + "-" + setDay + " " + 
+    setHour + ":" + setMinutes + ":" + setSeconds;
+
+    return timeData;
+}
